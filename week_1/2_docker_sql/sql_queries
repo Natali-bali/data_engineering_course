@@ -1,0 +1,70 @@
+select taxi.tpep_pickup_datetime, taxi.tpep_dropoff_datetime,
+	pickup."Zone" as "pick_up_location",
+	dropoff."Zone" as "drop_off_location"
+from yellow_taxi_data as taxi
+left join zones as pickup
+on taxi."PULocationID" = pickup."LocationID"
+left join zones as dropoff
+on taxi."DOLocationID" = dropoff."LocationID"
+limit 10;
+
+select taxi.index,
+		taxi.tpep_pickup_datetime,
+		taxi.tpep_dropoff_datetime,
+		(pul."Borough"||'/'||pul."Zone") as "pick_up_location",
+		(dol."Borough"||'/'||dol."Zone") as "drop_off_location",
+		taxi.total_amount
+from yellow_taxi_data as taxi, zones as pul, zones as dol
+where taxi."PULocationID" = pul."LocationID" and taxi."DOLocationID" = dol."LocationID"
+limit 10;
+
+select date_trunc('day', tpep_pickup_datetime) as d,
+		count(index)
+from yellow_taxi_data
+group by d
+order by d;
+
+select foo.d, foo.count_total
+from (select date_trunc('day', tpep_pickup_datetime) as d,
+			count(index) as count_total
+		from yellow_taxi_data
+		group by d) as foo
+where d = '2021-01-15 00:00:00'
+;
+
+select foo.d, foo.tip
+from (select date_trunc('day', tpep_pickup_datetime) as d,
+			max(tip_amount) as tip
+		from yellow_taxi_data
+		group by d) as foo
+order by foo.tip desc
+limit 1
+;
+
+select foo.d, foo.do_zone_name, foo.count_total, foo.pu_zone_name
+from(
+select date_trunc('day', tpep_pickup_datetime) as d,
+		zones."Zone" as do_zone_name,
+		pu_zones."Zone" as pu_zone_name,
+		count(1) as count_total
+	from yellow_taxi_data as taxi
+	left join zones as zones
+		on taxi."DOLocationID" = zones."LocationID"
+	left join zones as pu_zones
+		on taxi."PULocationID" = pu_zones."LocationID"
+		group by d, do_zone_name, pu_zone_name)	as foo
+	where foo.d = '2021-01-14 00:00:00' and foo.pu_zone_name = 'Central Park'
+	order by foo.count_total desc
+;
+
+select (pu_zones."Zone" || '/' || do_zones."Zone") as zone_name,
+		avg(taxi.total_amount) as sum_amount
+	from yellow_taxi_data as taxi
+	left join zones as do_zones
+		on taxi."DOLocationID" = do_zones."LocationID"
+	left join zones as pu_zones
+		on taxi."PULocationID" = pu_zones."LocationID"
+		group by zone_name
+	order by sum_amount desc
+
+;
