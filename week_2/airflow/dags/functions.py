@@ -13,7 +13,6 @@ def format_to_parquet(src_file):
     print('formated successfully')
 
 
-
 def upload_to_gcs(bucket_name, object_name, local_file):
     """
     Ref: https://cloud.google.com/storage/docs/uploading-objects#storage-upload-object-python
